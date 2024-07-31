@@ -2,13 +2,7 @@
 #include <math.h>
 #include <nlopt.h>
 
-int underlying_function(double *x, double uv[4])
-{
-    for (int i = 0; i < 4; i++)
-	*x += 0.5 * i * (uv[i] + *x) * (uv[i] - *x) + 1;
-
-    return 0;
-}
+#include "helper.h"
 
 extern double __enzyme_autodiff(void*, double); 
 int enzyme_const, enzyme_dup, enzyme_out;
@@ -34,8 +28,8 @@ double obj(unsigned n, const double *x, double *grad, void *my_func_data)
     for (int i = 0; i < n; i++)
 	val_x += calc(x[i]);
 
-    // if (grad)
-    // {
+    if (grad)
+    {
 	for (int i = 0; i < n; i++)
 	    grad[i] = 0.0;
 
@@ -45,7 +39,7 @@ double obj(unsigned n, const double *x, double *grad, void *my_func_data)
 
 	    // EnzymeAD derivative
 	    grad[i] = __enzyme_autodiff((void*)calc, x[i]);
-    // }
+    }
 
     return val_x;
 }
@@ -54,7 +48,7 @@ int main()
 {
     nlopt_opt opt;
     
-    opt = nlopt_create(NLOPT_LD_CCSAQ, 2); /* algorithm and dimensionality */
+    opt = nlopt_create(NLOPT_LD_MMA, 2); /* algorithm and dimensionality */
     nlopt_set_min_objective(opt, obj, NULL);
     
     double lb[2] = { -10.0, -10.0 };
